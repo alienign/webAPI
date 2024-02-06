@@ -1,8 +1,10 @@
 import os
 import sys
 
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
+from PyQt5.QtCore import Qt
+
 
 SCREEN_SIZE = [600, 450]
 
@@ -10,20 +12,18 @@ SCREEN_SIZE = [600, 450]
 class Example(QWidget):
     def __init__(self):
         super().__init__()
+        self.lon = input()
+        self.lat = input()
+        self.delta = input()
         self.getImage()
-        self.initUI()
 
     def getImage(self):
         import requests
         api_server = "http://static-maps.yandex.ru/1.x/"
 
-        lon = input()
-        lat = input()
-        delta = input()
-
         params = {
-            "ll": ",".join([lon, lat]),
-            "spn": ",".join([delta, delta]),
+            "ll": ",".join([self.lon, self.lat]),
+            "spn": ",".join([self.delta, self.delta]),
             "l": "map"
         }
         response = requests.get(api_server, params=params)
@@ -37,6 +37,7 @@ class Example(QWidget):
         self.map_file = "map.png"
         with open(self.map_file, "wb") as file:
             file.write(response.content)
+        self.initUI()
 
     def initUI(self):
         self.setGeometry(100, 100, *SCREEN_SIZE)
@@ -52,6 +53,17 @@ class Example(QWidget):
     def closeEvent(self, event):
         """При закрытии формы подчищаем за собой"""
         os.remove(self.map_file)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_PageUp:
+            self.delta = str(float(self.delta) + 0.01)
+            self.getImage()
+        elif event.key() == Qt.Key_PageDown:
+            if float(self.delta) - 0.01 != 0:
+                self.delta = str(float(self.delta) - 0.01)
+                self.getImage()
+            else:
+                sys.exit()
 
 
 if __name__ == '__main__':
